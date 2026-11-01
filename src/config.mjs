@@ -8,7 +8,7 @@ import { readCodexRuntimeSettings } from './codex-settings.mjs';
 
 export const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const PLUGIN_NAME = 'magpie-computer-use';
-export const VERSION = '0.5.0';
+export const VERSION = '0.5.1';
 // 仅为 MCP 传输保留内部预算，不再作为独立插件选项暴露或持久化。
 export const DEFAULTS = Object.freeze({ requestTimeoutMs: 120000, idleTimeoutMs: 300000 });
 

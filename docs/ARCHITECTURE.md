@@ -1,6 +1,6 @@
 # 工作原理
 
-0.5.0 是无独立设置页的 magpie 扩展。扩展自动登记资源库 MCP，用户选择 Agent；MCP 每次启动发现本机 Codex，调用其原始 Computer Use 组件并沿用原生账户批准。
+0.5.1 是无独立设置页的 magpie 扩展。扩展自动登记资源库 MCP，用户选择 Agent；MCP 每次启动发现本机 Codex，调用其原始 Computer Use 组件并沿用原生账户批准。
 
 ## 按代码阅读的顺序
 
@@ -96,7 +96,7 @@ flowchart TD
 - 原始授权结果经 `on_result` 进入 `persist`，由官方组件保存用户选择。
 - macOS 存储位于当前账户的 `~/Library/Group Containers/2DC432GLL2.com.openai.sky.CUAService/Library/Application Support/Software/ComputerUseAppApprovals.json`，与桌面 **Always-allowed apps** 共用。
 
-插件不实现另一套批准判定，不解析该清单来批准目标，不改写此文件或伪造 `accept`。复用发生在原始运行时内部；这里描述的是已核对版本的静态调用链，0.5 本轮未做持久批准端到端 GUI 验收，官方内部格式也可能随版本变化。
+插件不实现另一套批准判定，不解析该清单来批准目标，不改写此文件或伪造 `accept`。复用发生在原始运行时内部；0.5.0 的历史记录只核对了静态调用链，0.5.1 的实际验收范围见[验证记录](VERIFICATION.md)。官方内部格式可能随版本变化。
 
 Claude Desktop 的 Code 模式通过其 `disclaimer` 启动 MCP，系统可能把 bun 而非 OpenAI 原生运行时作为负责进程，因而禁止原始组件读取 App Group 的持久批准。网关只在当前祖先进程中发现并校验 Anthropic 签名的 Desktop helper 后，使用其 `--exec` 启动已校验的原始 OpenAI Node，使原生组件按自身签名身份读取原有批准。插件不读取或改写批准文件、不伪造用户选择，也不关闭原始沙箱；系统是否允许插件进程访问该文件仍取决于当时的 macOS 权限。非此启动链保持原有启动方式。
 

@@ -1,6 +1,6 @@
 {
   "name": "magpie-computer-use",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Computer Use extension for magpie with an automatically registered ten-tool MCP",
   "type": "module",
   "main": "./index.mjs",
@@ -55,15 +55,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wbb6517/magpie-computer-use.git"
+    "url": "git+https://github.com/SammySnake-d/magpie-computer-use-agent.git"
   },
-  "homepage": "https://github.com/wbb6517/magpie-computer-use#readme",
+  "homepage": "https://github.com/SammySnake-d/magpie-computer-use-agent#readme",
   "bugs": {
-    "url": "https://github.com/wbb6517/magpie-computer-use/issues"
-  },
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
+    "url": "https://github.com/SammySnake-d/magpie-computer-use-agent/issues"
   },
   "os": [
     "darwin"
@@ -74,5 +70,6 @@
   "magpie": {
     "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgMTI4IDEyOCIgZmlsbD0ibm9uZSI+CiAgPHRpdGxlPm1hZ3BpZSBDb21wdXRlciBVc2U8L3RpdGxlPgogIDxyZWN0IHg9IjQiIHk9IjQiIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiByeD0iMzAiIGZpbGw9IiMyQTY3RjUiLz4KICA8cmVjdCB4PSIyMyIgeT0iMjgiIHdpZHRoPSI4MiIgaGVpZ2h0PSI2NiIgcng9IjEwIiBmaWxsPSIjRkZGRkZGIi8+CiAgPHBhdGggZD0iTTIzIDQ3aDgyIiBzdHJva2U9IiNEREVBRkUiIHN0cm9rZS13aWR0aD0iNCIvPgogIDxjaXJjbGUgY3g9IjM0IiBjeT0iMzgiIHI9IjMiIGZpbGw9IiMyQTY3RjUiLz4KICA8Y2lyY2xlIGN4PSI0NCIgY3k9IjM4IiByPSIzIiBmaWxsPSIjRERFQUZFIi8+CiAgPGNpcmNsZSBjeD0iNTQiIGN5PSIzOCIgcj0iMyIgZmlsbD0iI0RERUFGRSIvPgogIDxwYXRoIGQ9Im02MSA1OSAzMyAyNS0xNiAzLTggMTYtOS00NFoiIGZpbGw9IiMxNzMyNEQiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=",
     "kind": "middleware"
-  }
+  },
+  "private": true
 }

@@ -1,15 +1,15 @@
 # 使用指南
 
-适用于 **0.5.0**。通过 magpie“扩展”安装，插件自动识别本机 Codex，没有独立设置页，也不读取旧版选项快照。
+适用于 **0.5.1**。通过 magpie“扩展”安装，插件自动识别本机 Codex，没有独立设置页，也不读取旧版选项快照。
 
 ## 安装和分发
 
 1. 确认是 Apple Silicon macOS，并已有包含 Computer Use 运行时的完整官方 Codex 桌面应用。
-2. 在 magpie“扩展 → 插件”中添加 `github:wbb6517/magpie-computer-use` 并启用；npm 发布后也可按包名 `magpie-computer-use` 添加。本地目录仅用于开发加载。
+2. 在 magpie“扩展 → 插件”中添加 `github:SammySnake-d/magpie-computer-use-agent` 并启用。本社区版本未发布到 npm，不要把同名 npm 包当作此版本。本地目录仅用于开发加载。
 3. 打开 **资源库 → MCP 服务器 → magpie-computer-use**，选择目标 Agent。
 4. 检测十个工具，重连 Agent 或新开会话。先执行 `list_apps`，再对目标执行 `get_app_state`。
 
-自动登记不会替用户启用全部 Agent。Claude Code 等 Agent 均由资源库分发，无需另行手工添加同名 MCP。npm 发布与官方推荐收录是不同状态，推荐列表需另行申请。
+自动登记不会替用户启用全部 Agent。Claude Code 等 Agent 均由资源库分发，无需另行手工添加同名 MCP。GitHub topic 发现与官方推荐收录是不同状态，推荐列表需另行申请。
 
 Codex 移动或升级后，重连 MCP 会重新发现安装。多个完整安装同时运行且无法根据继承来源确定时，会提示歧义；保留需要使用的一份后重连。默认发现支持 `Codex.app`、`ChatGPT.app`，也支持运行中或 Spotlight 可发现的重命名完整应用。无需修改插件路径设置。
 
