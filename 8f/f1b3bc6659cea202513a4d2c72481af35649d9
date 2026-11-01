@@ -1,0 +1,137 @@
+.gitignore
+  s_0c2b23ac346ac9::t_926e8f6fe9e07b 1-12
+CHANGELOG.md
+  s_0c2b23ac346ac9::t_371869b7b1f78d 1-25
+CONTRIBUTING.md
+  s_0c2b23ac346ac9::t_4c92d59397f307 1-67
+LICENSE
+  s_0c2b23ac346ac9::t_97db08e85c05dc 1-21
+README.md
+  s_0c2b23ac346ac9::t_703fc65f714ff5 1-87
+THIRD_PARTY_NOTICES.md
+  s_0c2b23ac346ac9::t_de3851f0932968 1-23
+assets/cover.svg
+  s_0c2b23ac346ac9::t_80ccb9d68f3909 1-24
+assets/icon.svg
+  s_0c2b23ac346ac9::t_e7abd41a1ff222 1-10
+bin/magpie-computer-use.mjs
+  s_0c2b23ac346ac9::t_63002fb44e0886 1-4
+docs/ARCHITECTURE.md
+  s_0c2b23ac346ac9::t_6cea5d243daf1a 1-154
+docs/LCU-INTERNALS.md
+  s_0c2b23ac346ac9::t_27e3c7c78c21ce 1-52
+docs/PUBLISHING.md
+  s_0c2b23ac346ac9::t_66fa5ae7b1952b 1-35
+docs/TROUBLESHOOTING.md
+  s_0c2b23ac346ac9::t_8c59e5131a0725 1-66
+docs/USAGE.md
+  s_0c2b23ac346ac9::t_04e693094877df 1-148
+docs/VERIFICATION.md
+  s_0c2b23ac346ac9::t_1664ccd55dbeb6 1-128
+docs/auto-configuration-verification.json
+  s_0c2b23ac346ac9::t_8c0cdf94ce290a 1-72
+docs/claude-code-verification.json
+  s_0c2b23ac346ac9::t_53c9ae52453ba6 1-183
+docs/verification.json
+  s_0c2b23ac346ac9::t_6cfdfbf8608407 1-28
+index.mjs
+  s_0c2b23ac346ac9::t_4dda4fd001c75c 1-25
+package-lock.json
+  s_0c2b23ac346ac9::t_73336233f7202f 1-1241
+package.json
+  s_0c2b23ac346ac9::t_3329835518b220 1-78
+scripts/check.mjs
+  s_0c2b23ac346ac9::t_1db64d92c29bfb 1-32
+scripts/fixtures/GuiFixture.swift
+  s_0c2b23ac346ac9::t_ea8284620c51de 1-118
+scripts/gui-fixture.mjs
+  s_0c2b23ac346ac9::t_1335615de67f54 1-51
+scripts/smoke-runtime.mjs
+  s_0c2b23ac346ac9::t_95515dd0d63734 1-36
+src/bootstrap.mjs
+  s_0c2b23ac346ac9::t_237b0e2f3f9a0a 1-21
+src/bridge.mjs
+  s_0c2b23ac346ac9::t_a95825f4a34f46 1-258
+src/cleanup.mjs
+  s_0c2b23ac346ac9::t_ce82184e04c884 1-233
+src/cli.mjs
+  s_0c2b23ac346ac9::t_f04d616826fa62 1-88
+src/codex-settings.mjs
+  s_0c2b23ac346ac9::t_cd5a7ed821acd9 1-47
+src/codex.mjs
+  s_0c2b23ac346ac9::t_64989a16d8eb43 1-65
+src/config.mjs
+  s_0c2b23ac346ac9::t_67fa08992c1286 1-56
+src/gateway/LICENSE
+  s_0c2b23ac346ac9::t_18c2e38902e62c 1-21
+src/gateway/SOURCES.md
+  s_0c2b23ac346ac9::t_54507be81218f6 1-19
+src/gateway/app_layout.mjs
+  s_0c2b23ac346ac9::t_d998b1c4a73696 1-35
+src/gateway/entry.mjs
+  s_0c2b23ac346ac9::t_484bd824686395 1-183
+src/gateway/lock.mjs
+  s_0c2b23ac346ac9::t_da3f28c95446dd 1-20
+src/gateway/macos_host.mjs
+  s_0c2b23ac346ac9::t_cf5fe7ece5174a 1-701
+src/gateway/macos_sky_service.mjs
+  s_0c2b23ac346ac9::t_cc5bd9a0ae0f2c 1-466
+src/gateway/responsibility.mjs
+  s_0c2b23ac346ac9::t_2a52cefc789b8c 1-62
+src/library.mjs
+  s_0c2b23ac346ac9::t_e1eb5e578739fb 1-144
+src/native-approval.mjs
+  s_0c2b23ac346ac9::t_ef27e1cca37352 1-119
+src/native-tools.mjs
+  s_0c2b23ac346ac9::t_56a1017e8df415 1-79
+src/process.mjs
+  s_0c2b23ac346ac9::t_94a6f269693132 1-20
+tests/bridge.test.mjs
+  s_0c2b23ac346ac9::t_cfe94598adc633 1-292
+tests/cleanup.test.mjs
+  s_0c2b23ac346ac9::t_9790e11f722681 1-184
+tests/codex.test.mjs
+  s_0c2b23ac346ac9::t_c420c429c68630 1-71
+tests/config.test.mjs
+  s_0c2b23ac346ac9::t_3a6170a8ca1725 1-36
+tests/fixtures/lcu-client.mjs
+  s_0c2b23ac346ac9::t_9b5e1ab596ca00 1-46
+tests/fixtures/upstream-mcp.mjs
+  s_0c2b23ac346ac9::t_c4d51161c7b5dd 1-29
+tests/library.test.mjs
+  s_0c2b23ac346ac9::t_53edaf38f04ecb 1-144
+tests/native-approval.test.mjs
+  s_0c2b23ac346ac9::t_822f0ccfd2cbbe 1-65
+tests/native-tools.test.mjs
+  s_0c2b23ac346ac9::t_a3e81c9b3df693 1-61
+tests/preflight.test.mjs
+  s_0c2b23ac346ac9::t_c0423f183844cb 1-34
+tests/responsibility.test.mjs
+  s_0c2b23ac346ac9::t_ee89c59494e845 1-54
+vendor/lcu-client/LICENSE
+  s_0c2b23ac346ac9::t_af23bd86c9d37a 1-21
+vendor/lcu-client/PATCHES.md
+  s_0c2b23ac346ac9::t_d2fd1cacacb989 1-19
+vendor/lcu-client/client.mjs
+  s_0c2b23ac346ac9::t_aed1e56badae2d 1-344
+vendor/lcu-client/host-guard.mjs
+  s_0c2b23ac346ac9::t_5386505b2be4eb 1-145
+vendor/lcu-client/package.json
+  s_0c2b23ac346ac9::t_96d214a274fe89 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8ff1b3bc6659cea202513a4d2c72481af35649d9",
+  "prompts": {},
+  "sessions": {
+    "s_0c2b23ac346ac9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1931e-abe5-7fd1-922a-f65385c3f281",
+        "model": "gpt-6.1-terra"
+      },
+      "human_author": "Sammy <caxapokrq+sammy@gmail.com>"
+    }
+  }
+}
