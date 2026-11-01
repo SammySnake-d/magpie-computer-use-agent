@@ -1,0 +1,19 @@
+# Embedded gateway source provenance
+
+Derived from LCU 0.11.4, commit bf45b8edf01bc380def2ba8355b60a4ab5e1857d, MIT, Copyright (c) 2026 Amont Labs. Full license: LICENSE.
+
+- macos_host.mjs: derived from upstream lcu/macos_host.mjs. Remove the unused TrustedControlBridge status/Stop channel and its controlAddress option. Keep the private lifetime socket, open-turn tracking, bounded turn-ended commands, stale-service recovery and shutdown cleanup. The socket framing/listen/send helpers remain because the lifetime and recovery protocol uses them.
+- macos_sky_service.mjs: derived from upstream lcu/macos_sky_service.mjs. Remove unused status/Stop control routing and its context/connection state. Retain the original native client used by turn cleanup, renamed from controlClient to nativeClient. Keep lifetime notifications, native IPC and CLI cleanup/retries, stale-service recovery, turn tracking and the upstream Unicode type_text adaptation.
+- app_layout.mjs: derived from upstream lcu/app_layout.mjs with attribution and Chinese comments; use standard ESM builtin imports so the trusted magpie launcher can verify an installation before its Node executable starts.
+- lock.mjs: only the macOS tryExclusiveOpen/O_EXLOCK subset of upstream lcu/lock.mjs.
+- entry.mjs: new package-local launcher adapted from upstream runtime.mjs environment/macOS launch flow and platforms.mjs checks. It takes an explicit official-app path and uses only the macOS backend. All required files and the app/helper identity and deep signatures are checked at each launch. No external installer, release descriptor, update mechanism, CLI adapter, platform shim, signature cache or LCU executable is used. The original signed app is neither copied nor modified.
+
+Internal LCU_MAC_* environment names remain because the included client and host/service source use that private lifetime/recovery protocol. They do not locate or invoke an external LCU installation. The unused LCU_MAC_CONTROL_SOCKET status/Stop protocol is omitted.
+
+Chrome selects the original browser surface only. This package does not include upstream browser install/private native-host relay code; it needs the user's existing official extension/native host and original authorization flow.
+
+本次注释维护：将内置网关与 macOS 宿主的关键英文说明转换为简体中文，补充签名验证、账户身份、轮次清理、超时与恢复边界的原因说明；保留上游版权声明、标识符、日志及所有可执行语句。
+
+0.5.0: official-app discovery is handled by `src/codex.mjs`; this launcher accepts renamed complete `.app` bundles while retaining bundle identity and deep signature checks. Safe runtime environment settings and the configured browser service come from the local Codex config via `src/codex-settings.mjs`. The launcher no longer forces a Chrome-only backend or its own TinySky/build-flavor choices. Native helper IPC, the original node_repl persisted-app approval interceptor, original policy checks, and caller-provided current host connections remain in place.
+
+工作流注释维护（2026-10-18）：补充入口、Sky 包装器与生命周期宿主之间的调用说明；可执行 token 与 AST 已比较，未改变执行逻辑。
