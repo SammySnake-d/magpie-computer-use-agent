@@ -1,0 +1,43 @@
+docs/TROUBLESHOOTING.md
+  s_0c2b23ac346ac9::t_4a2f24f37524df 3
+docs/VERIFICATION.md
+  s_0c2b23ac346ac9::t_c6150f8ddf7556 7-8
+  s_0c2b23ac346ac9::t_4a2f24f37524df 3-6,9-13
+docs/USAGE.md
+  s_0c2b23ac346ac9::t_4a2f24f37524df 3,8,12
+README.md
+  s_0c2b23ac346ac9::t_4a2f24f37524df 21-22,31,42
+  s_0c2b23ac346ac9::t_5c647bb92a9df7 79
+  s_0c2b23ac346ac9::t_c6150f8ddf7556 77
+docs/ARCHITECTURE.md
+  s_0c2b23ac346ac9::t_4a2f24f37524df 3
+  s_0c2b23ac346ac9::t_5c647bb92a9df7 99
+docs/PUBLISHING.md
+  s_0c2b23ac346ac9::t_fd9fccfdc763ff 1,3,5,7,9,11
+CHANGELOG.md
+  s_0c2b23ac346ac9::t_4a2f24f37524df 3-8
+package-lock.json
+  s_0c2b23ac346ac9::t_23539b65ccdb47 3,9
+package.json
+  s_0c2b23ac346ac9::t_17cd577a47de06 3,58,60,62,73-74
+scripts/smoke-runtime.mjs
+  s_0c2b23ac346ac9::t_a8b676d327bb8b 7,12
+src/config.mjs
+  s_0c2b23ac346ac9::t_fdd2a03a52d078 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ad62bd1a810e29543bce59240d79c81b6d820705",
+  "prompts": {},
+  "sessions": {
+    "s_0c2b23ac346ac9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1931e-abe5-7fd1-922a-f65385c3f281",
+        "model": "gpt-6.1-terra"
+      },
+      "human_author": "Sammy <caxapokrq+sammy@gmail.com>"
+    }
+  }
+}
