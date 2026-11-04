@@ -1,0 +1,41 @@
+docs/ARCHITECTURE.md
+  s_0c2b23ac346ac9::t_8f89d3c5627ac4 3,28,115
+README.md
+  s_0c2b23ac346ac9::t_8f89d3c5627ac4 42,77-79
+src/cli.mjs
+  s_0c2b23ac346ac9::t_8f89d3c5627ac4 60
+package.json
+  s_0c2b23ac346ac9::t_8f89d3c5627ac4 3
+tests/bridge.test.mjs
+  s_0c2b23ac346ac9::t_f73c70d8444437 237-278
+  s_0c2b23ac346ac9::t_9e917b804e31f2 279-323,325-327
+  s_0c2b23ac346ac9::t_92a398d161e08f 324
+  s_0c2b23ac346ac9::t_844eb1e8643adb 338
+  s_0c2b23ac346ac9::t_45635ffc20db34 225-236
+  s_0c2b23ac346ac9::t_6ba6c627b0cbf6 211-212,214-221
+src/config.mjs
+  s_0c2b23ac346ac9::t_8f89d3c5627ac4 11-12,55
+CHANGELOG.md
+  s_0c2b23ac346ac9::t_8f89d3c5627ac4 3-7
+src/bridge.mjs
+  s_0c2b23ac346ac9::t_cb4369532f5cbe 81,86,92-94,109,140,262,267
+  s_0c2b23ac346ac9::t_763c6ddec2c745 10,45-46,97-98,103-108,110,112-128,133-139,141,143-175,252,265-266,281-282,305,314-323,329
+  s_0c2b23ac346ac9::t_e9b0d060a4c481 129-132
+  s_0c2b23ac346ac9::t_aa6f554076feb1 71,87-91,111,142,268-270
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "165ceb7b27c15f0b30c46fe8df6bc8ff69965fc3",
+  "prompts": {},
+  "sessions": {
+    "s_0c2b23ac346ac9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1931e-abe5-7fd1-922a-f65385c3f281",
+        "model": "gpt-6.1-terra"
+      },
+      "human_author": "SammySnake-d <173797004+SammySnake-d@users.noreply.github.com>"
+    }
+  }
+}
