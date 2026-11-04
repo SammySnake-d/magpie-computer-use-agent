@@ -1,6 +1,6 @@
 {
   "name": "magpie-computer-use",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Computer Use extension for magpie with an automatically registered ten-tool MCP",
   "type": "module",
   "main": "./index.mjs",

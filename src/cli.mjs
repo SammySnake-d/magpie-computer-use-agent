@@ -57,7 +57,7 @@ export async function main(argv = process.argv.slice(2)) {
     const { runBridge } = await import('./bridge.mjs');
     const bridge = await runBridge({ toolSurface: args.surface || 'native', runtimeCommand: paths.runtimeCommand, clientModulePath: paths.clientModulePath,
       requestTimeoutMs: options.requestTimeoutMs, idleTimeoutMs: options.idleTimeoutMs });
-    // 保持 stdio MCP 进程存活，直到 Agent 断开、取消、空闲或收到退出信号。
+    // 空闲只回收无上下文的内部运行时；stdio MCP 保持到宿主断开或进程退出。
     await bridge.closed; return;
   }
   if (args.command === 'doctor') {

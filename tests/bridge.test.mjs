@@ -208,11 +208,121 @@ test('EOF waits for real cleanup before closing the upstream', async t => {
   assert.deepEqual(events.slice(-2).map(event => event.event), ['turnEnded', 'close']);
 });
 
-test('idle ends an unused connection after its last call and performs cleanup', async t => {
-  const { peer, bridge, events } = await harness(t, { idleTimeoutMs: 60 });
+test('idle preserves an existing context and host connection until the host disconnects', async t => {
+  const { peer, bridge, events, input } = await harness(t, { idleTimeoutMs: 60 });
   await peer.callTool({ name: 'js', arguments: {} });
-  await Promise.race([bridge.closed, delay(500).then(() => assert.fail('idle did not close'))]);
+  await delay(160);
+  assert.equal(events.filter(event => event.event === 'close').length, 0);
+  assert.deepEqual(await peer.callTool({ name: 'js', arguments: { code: 'image' } }), imageResult);
+  const calls = events.filter(event => event.event === 'call');
+  assert.equal(calls[0].sessionId, calls[1].sessionId);
+  assert.equal(calls[0].turnId, calls[1].turnId);
+  input.end();
+  await bridge.closed;
   assert.deepEqual(events.slice(-2).map(event => event.event), ['turnEnded', 'close']);
+});
+
+test('idle releases an unused runtime without disconnecting the host and the next call wakes it', async t => {
+  const { peer, bridge, events } = await harness(t, { idleTimeoutMs: 60 });
+  let disconnected = false;
+  void bridge.closed.then(() => { disconnected = true; });
+  await delay(160);
+  assert.equal(disconnected, false, 'an idle runtime must not close the host MCP connection');
+  assert.equal(events.filter(event => event.event === 'close').length, 1, 'the unused runtime is released');
+  assert.deepEqual((await peer.listTools()).tools, tools);
+  assert.deepEqual(await peer.callTool({ name: 'js', arguments: { code: 'image' } }), imageResult);
+  assert.equal(events.filter(event => event.event === 'connect').length, 2, 'the next call starts one runtime');
+});
+
+test('concurrent calls after idle share one restarted runtime', async t => {
+  const { peer, events } = await harness(t, { idleTimeoutMs: 40 });
+  await until(() => events.filter(event => event.event === 'close').length === 1);
+  const results = await Promise.all([
+    peer.callTool({ name: 'js', arguments: { code: 'image' } }),
+    peer.callTool({ name: 'js', arguments: { code: 'image' } }),
+  ]);
+  assert.deepEqual(results, [imageResult, imageResult]);
+  assert.equal(events.filter(event => event.event === 'connect').length, 2);
+});
+
+test('a changed upstream contract after idle fails closed without disconnecting the host', async t => {
+  let created = 0;
+  const factory = events => args => {
+    const client = fixtureFactory(events)(args);
+    if (++created > 1) client.instructions = 'changed security instructions';
+    return client;
+  };
+  const events = [];
+  const { peer } = await harness(t, { idleTimeoutMs: 40, createClient: factory(events) });
+  await until(() => events.filter(event => event.event === 'close').length === 1);
+  await assert.rejects(peer.callTool({ name: 'js', arguments: {} }), /runtime changed while idle/i);
+  assert.deepEqual((await peer.listTools()).tools, tools);
+  assert.equal(events.filter(event => event.event === 'close').length, 2);
+});
+
+test('a failed idle cleanup refuses to start a second runtime', async t => {
+  const events = [];
+  let created = 0;
+  const factory = args => {
+    created++;
+    const client = fixtureFactory(events)(args);
+    client.close = async () => { events.push({ event: 'close' }); throw new Error('fixture close failed'); };
+    return client;
+  };
+  const { peer } = await harness(t, { idleTimeoutMs: 40, createClient: factory });
+  await until(() => events.some(event => event.event === 'close'));
+  await assert.rejects(peer.callTool({ name: 'js', arguments: {} }), /runtime cleanup failed/i);
+  assert.equal(created, 1);
+  assert.deepEqual((await peer.listTools()).tools, tools);
+});
+
+test('cancellation while the idle runtime wakes does not create a context', async t => {
+  const events = [];
+  let created = 0, release;
+  const factory = args => {
+    const client = fixtureFactory(events)(args);
+    if (++created === 2) {
+      const connect = client.connect;
+      client.connect = async () => { events.push({ event: 'wake-wait' }); await new Promise(resolve => { release = resolve; }); await connect(); };
+    }
+    return client;
+  };
+  const { peer } = await harness(t, { idleTimeoutMs: 40, createClient: factory });
+  await until(() => events.filter(event => event.event === 'close').length === 1);
+  const controller = new AbortController();
+  const pending = peer.callTool({ name: 'js', arguments: {} }, undefined, { signal: controller.signal });
+  await until(() => events.some(event => event.event === 'wake-wait'));
+  controller.abort(new Error('cancelled while waking'));
+  await assert.rejects(pending, /cancelled while waking/);
+  release();
+  await until(() => events.filter(event => event.event === 'close').length === 2);
+  assert.equal(events.filter(event => event.event === 'call').length, 0);
+  assert.equal(events.filter(event => event.event === 'turnEnded').length, 0);
+  assert.deepEqual((await peer.listTools()).tools, tools);
+});
+
+test('host EOF interrupts a runtime that is still waking and closes it once', async t => {
+  const events = [];
+  let created = 0;
+  const factory = args => {
+    const client = fixtureFactory(events)(args);
+    if (++created === 2) {
+      let finish;
+      client.connect = async () => { events.push({ event: 'wake-wait' }); await new Promise(resolve => { finish = resolve; }); };
+      client.close = async () => { events.push({ event: 'close' }); finish?.(); };
+    }
+    return client;
+  };
+  const { peer, bridge, input } = await harness(t, { idleTimeoutMs: 40, createClient: factory });
+  await until(() => events.filter(event => event.event === 'close').length === 1);
+  const pending = peer.callTool({ name: 'js', arguments: {} }).catch(() => {});
+  await until(() => events.some(event => event.event === 'wake-wait'));
+  input.end();
+  const result = await Promise.race([bridge.closed, delay(500).then(() => assert.fail('EOF did not stop wake'))]);
+  assert.equal(result.reason, 'eof');
+  assert.equal(events.filter(event => event.event === 'close').length, 2);
+  await peer.close();
+  await pending;
 });
 
 test('real vendored shared client preserves progress, images, and original host guard against fixture MCP', async t => {
@@ -225,6 +335,7 @@ test('real vendored shared client preserves progress, images, and original host 
   const progress = [];
   assert.deepEqual(await peer.callTool({ name: 'js', arguments: { code: 'progress' } }, undefined,
     { onprogress: update => progress.push(update) }), imageResult);
+  await until(() => progress.length > 0, 'original progress was not forwarded');
   assert.equal(progress[0].message, 'real upstream progress');
   const refused = await peer.callTool({ name: 'js', arguments: { code: 'approval', app: 'com.apple.Terminal' } });
   assert.equal(JSON.parse(refused.content[0].text).action, 'decline');

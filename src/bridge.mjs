@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { VERSION, PLUGIN_NAME } from './config.mjs';
 import { isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { isDeepStrictEqual } from 'node:util';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
@@ -41,7 +42,8 @@ const blockedApproval = params => params?._meta?.connector_id === 'computer-use'
 
 /**
  * 通过标准 stdio MCP 对接内置网关。宿主未提供真实轮次元数据时，整条连接共用一个上下文，
- * 直到空闲超时、EOF、取消或退出时清理；单次工具调用不被当作完整用户轮次。
+ * 直到 EOF、取消或退出时清理；单次工具调用不被当作完整用户轮次。
+ * 没有会话状态时可以回收空闲的内部运行时，但对外 MCP 连接必须保持打开。
  */
 export async function runBridge({
   runtimeCommand, clientModulePath, toolSurface = 'native', requestTimeoutMs = 120_000, idleTimeoutMs = 300_000,
@@ -66,7 +68,7 @@ export async function runBridge({
   if (!['native', 'javascript'].includes(toolSurface)) throw new Error('Unknown Computer Use tool surface');
   const connectionId = `magpie-mcp-${randomUUID()}`;
   let connectionIdentity = { sessionId: connectionId, turnId: `${connectionId}-connection` };
-  let server, client, idleTimer, closePromise;
+  let server, client, idleTimer, closePromise, opening, openingClient, eviction, evictionError, failedRuntime, upstreamContract;
   let closing = false;
   let approvals = 0;
   let resolveClosed;
@@ -76,16 +78,99 @@ export async function runBridge({
   const ending = new Map();
   const endedHostContexts = new Set();
   const budgetListeners = new Set();
+  const runtimeClosings = new WeakMap();
   const report = message => { try { errorOutput.write(`magpie-computer-use: ${message}\n`); } catch {} };
   const requestNativeApproval = nativeApproval ?? createNativeApproval({ report });
   const noteApprovalChange = () => { for (const listener of [...budgetListeners]) listener(); };
 
+  function closeRuntime(runtime) {
+    if (!runtimeClosings.has(runtime)) {
+      const pending = Promise.resolve().then(() => runtime.close());
+      runtimeClosings.set(runtime, pending);
+      pending.catch(() => { if (runtimeClosings.get(runtime) === pending) runtimeClosings.delete(runtime); });
+    }
+    return runtimeClosings.get(runtime);
+  }
+
   function scheduleIdle() {
     clearTimeout(idleTimer);
-    if (!closing && idleTimeoutMs && !active.size && !approvals) {
-      idleTimer = setTimeout(() => { void close('idle'); }, idleTimeoutMs);
+    if (!closing && idleTimeoutMs && client && !opening && !eviction && !active.size && !approvals && !contexts.size) {
+      idleTimer = setTimeout(() => { void evictIdleRuntime(); }, idleTimeoutMs);
       idleTimer.unref?.();
     }
+  }
+
+  // 只回收从未建立（或已明确清理完）的上下文。运行时中的应用对象和 REPL 状态
+  // 无法安全序列化；已有上下文时留到宿主断开，避免后续动作落到过期目标上。
+  function evictIdleRuntime() {
+    if (closing || !client || opening || eviction || active.size || approvals || contexts.size) return;
+    const old = client;
+    client = undefined;
+    eviction = closeRuntime(old).catch(error => {
+      evictionError = error;
+      failedRuntime = old;
+      report(`Idle runtime cleanup failed: ${error?.message ?? error}`);
+    }).finally(() => { eviction = undefined; });
+  }
+
+  async function openRuntime() {
+    const next = await createClient({ command: runtimeCommand, onElicitation: elicit });
+    openingClient = next;
+    let connectTimer;
+    try {
+      if (closing) throw new Error('Computer Use connection is closing');
+      await Promise.race([next.connect(), new Promise((_, reject) => {
+        connectTimer = setTimeout(() => reject(new Error('Runtime connection timed out')), requestTimeoutMs);
+      })]);
+      const originalTools = next.publicTools().filter(tool => PUBLIC_TOOLS.has(tool.name));
+      if (originalTools.length !== PUBLIC_TOOLS.size || ![...PUBLIC_TOOLS].every(name => originalTools.some(tool => tool.name === name))) {
+        throw new Error('Runtime must provide the original js and js_reset tools');
+      }
+      const contract = { instructions: next.instructions, tools: originalTools };
+      const sorted = tools => [...tools].sort((a, b) => a.name.localeCompare(b.name));
+      if (upstreamContract && (upstreamContract.instructions !== contract.instructions ||
+          !isDeepStrictEqual(sorted(upstreamContract.tools), sorted(contract.tools)))) {
+        throw new Error('Computer Use runtime changed while idle; reconnect the MCP client');
+      }
+      if (closing) throw new Error('Computer Use connection is closing');
+      upstreamContract ??= contract;
+      client = next;
+      return next;
+    } catch (error) {
+      try { await closeRuntime(next); } catch (closeError) {
+        evictionError = closeError;
+        failedRuntime = next;
+        report(`Runtime cleanup failed: ${closeError?.message ?? closeError}`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(connectTimer);
+      if (openingClient === next) openingClient = undefined;
+    }
+  }
+
+  function ensureRuntime() {
+    if (client) return Promise.resolve(client);
+    if (!opening) {
+      opening = (async () => {
+        if (eviction) await eviction;
+        if (evictionError) throw new Error('Previous runtime cleanup failed; reconnect the MCP client');
+        if (closing) throw new Error('Computer Use connection is closing');
+        return openRuntime();
+      })().finally(() => { opening = undefined; scheduleIdle(); });
+    }
+    return opening;
+  }
+
+  // 某个调用取消不应中止其他调用共享的重启，但该调用自身必须立即结束。
+  function waitForRuntime(signal) {
+    return new Promise((resolve, reject) => {
+      const abort = () => reject(signal.reason ?? new Error('Computer Use request cancelled'));
+      if (signal.aborted) return abort();
+      signal.addEventListener('abort', abort, { once: true });
+      ensureRuntime().then(value => { signal.removeEventListener('abort', abort); resolve(value); },
+        error => { signal.removeEventListener('abort', abort); reject(error); });
+    });
   }
 
   // 先拒绝 magpie 本身及其他代理宿主，再把原始授权请求交回客户端，避免代理自行批准。
@@ -164,7 +249,7 @@ export async function runBridge({
     return pending;
   }
 
-  // 统一处理 EOF、空闲、信号和失败退出；重复关闭复用同一 Promise，先停止调用再清理轮次与传输。
+  // 统一处理 EOF、信号和失败退出；重复关闭复用同一 Promise，先停止调用再清理轮次与传输。
   async function close(reason = 'shutdown') {
     if (closing) return closePromise;
     closing = true;
@@ -174,9 +259,15 @@ export async function runBridge({
       process.off('SIGTERM', onSignal); process.off('SIGINT', onSignal);
       for (const call of active) call.controller.abort(new Error(`MCP connection closed (${reason})`));
       try { await server?.close(); } catch (error) { report(`Downstream close failed: ${error?.message ?? error}`); }
+      if (openingClient) { try { await closeRuntime(openingClient); } catch (error) { report(`Runtime close failed: ${error?.message ?? error}`); } }
       await Promise.allSettled([...active].map(call => call.done));
       await Promise.allSettled([...contexts.values()].map(cleanup));
-      try { await client?.close(); } catch (error) { report(`Runtime close failed: ${error?.message ?? error}`); }
+      if (opening) await opening.catch(() => {});
+      if (eviction) await eviction;
+      if (client) { try { await closeRuntime(client); } catch (error) { report(`Runtime close failed: ${error?.message ?? error}`); } }
+      if (failedRuntime && failedRuntime !== client) {
+        try { await closeRuntime(failedRuntime); } catch (error) { report(`Runtime close retry failed: ${error?.message ?? error}`); }
+      }
       resolveClosed({ reason });
     })();
     return closePromise;
@@ -187,17 +278,8 @@ export async function runBridge({
 
   try {
     // 第一条 MCP 连接朝向内部网关/官方运行时；它会启动子进程并发现 js、js_reset。
-    client = await createClient({ command: runtimeCommand, onElicitation: elicit });
-    let connectTimer;
-    try {
-      await Promise.race([client.connect(), new Promise((_, reject) => {
-        connectTimer = setTimeout(() => reject(new Error('Runtime connection timed out')), requestTimeoutMs);
-      })]);
-    } finally { clearTimeout(connectTimer); }
-    const originalTools = client.publicTools().filter(tool => PUBLIC_TOOLS.has(tool.name));
-    if (originalTools.length !== PUBLIC_TOOLS.size || ![...PUBLIC_TOOLS].every(name => originalTools.some(tool => tool.name === name))) {
-      throw new Error('Runtime must provide the original js and js_reset tools');
-    }
+    await openRuntime();
+    const originalTools = upstreamContract.tools;
     // 对 Agent 发布十工具 schema；内部原始运行时仍接收 js/js_reset，不要求模型写脚本。
     const tools = toolSurface === 'native' ? NATIVE_TOOLS : originalTools;
     const exposed = toolSurface === 'native' ? NATIVE_TOOL_NAMES : PUBLIC_TOOLS;
@@ -216,12 +298,11 @@ export async function runBridge({
       if (ending.has(key) || endedHostContexts.has(key)) throw new Error('Computer Use context has ended or is being cleaned up');
       // 例如 click({app, element_index}) 被 nativeCall() 转为固定的 target.click(...) 脚本。
       const invocation = toolSurface === 'native' ? { name: 'js', args: nativeCall(name, args, identity) } : { name, args };
-      contexts.set(key, identity);
       clearTimeout(idleTimer);
       // 模型在 JavaScript 参数中声明更长超时，也不能扩大用户配置的实际运行时间预算。
       const runTimeout = requestTimeoutMs;
       const budget = deadline(extra.signal, runTimeout);
-      const record = { key, controller: budget.controller, done: undefined };
+      const record = { key, controller: budget.controller, done: undefined, started: false };
       const progressToken = metadata?.progressToken;
       // 仅向请求中原有的 progressToken 回传进度；连接关闭或调用取消后不再发送。
       const onprogress = progress => {
@@ -229,17 +310,23 @@ export async function runBridge({
         void server.notification({ method: 'notifications/progress', params: { ...progress, progressToken } })
           .catch(error => report(`Progress forwarding failed: ${error?.message ?? error}`));
       };
-      record.done = (async () => {
-        try { return await client.call(invocation.name, invocation.args, { ...identity, metadata, signal: record.controller.signal, onprogress }); }
-        finally { budget.dispose(); }
-      })();
       active.add(record);
+      record.done = Promise.resolve().then(async () => {
+        try {
+          const runtime = await waitForRuntime(record.controller.signal);
+          if (record.controller.signal.aborted) throw record.controller.signal.reason;
+          contexts.set(key, identity);
+          record.started = true;
+          return await runtime.call(invocation.name, invocation.args, { ...identity, metadata, signal: record.controller.signal, onprogress });
+        }
+        finally { budget.dispose(); }
+      });
       // MCP content/image/isError 原样返回；不把图片变成文字，也不把工具错误包装成成功。
       try { return await record.done; }
       finally {
         active.delete(record);
         // 取消后先清理整个上下文；连接作用域只有清理成功才换新轮次 ID，避免继续复用已结束身份。
-        if (record.controller.signal.aborted && !closing) {
+        if (record.started && record.controller.signal.aborted && !closing) {
           const cleaned = await cleanup(identity).then(() => true, () => false);
           if (!cleaned) void close('cleanup-failed');
           else if (identity.scope === 'connection') connectionIdentity = { ...connectionIdentity, turnId: `${connectionId}-${randomUUID()}` };

@@ -8,8 +8,8 @@ import { readCodexRuntimeSettings } from './codex-settings.mjs';
 
 export const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const PLUGIN_NAME = 'magpie-computer-use';
-export const VERSION = '0.5.1';
-// 仅为 MCP 传输保留内部预算，不再作为独立插件选项暴露或持久化。
+export const VERSION = '0.5.2';
+// 空闲预算只用于无上下文的内部运行时回收，不关闭 MCP 传输。
 export const DEFAULTS = Object.freeze({ requestTimeoutMs: 120000, idleTimeoutMs: 300000 });
 
 // 只供内部开发诊断覆盖路径；普通扩展启动不读取旧选项或用户填写的路径。
@@ -52,5 +52,5 @@ export function status(options) {
     appPath: options.appPath, appExists: fs.existsSync(options.appPath), gatewayPath: paths.gatewayPath,
     runtimePrepared: fs.existsSync(paths.gatewayPath) && executable(paths.nodePath), originalNodeAvailable: executable(paths.nodePath), dependenciesInstalled,
     browserServiceAvailable: options.chrome,
-    lifecycle: 'One isolated runtime per MCP connection; original Codex persisted app approvals and host turn metadata are preserved' };
+    lifecycle: 'One isolated runtime at a time per MCP connection; a stateless idle runtime may be released and restarted' };
 }
